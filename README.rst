@@ -85,13 +85,13 @@ Generate and pretty-print binary trees:
 
     from binarytree import tree, bst, heap, pprint
 
-    # Generate a random binary tree
+    # Generate a random binary tree and return its root
     my_tree = tree(height=5, balanced=False)
 
-    # Generate a random binary search tree
+    # Generate a random binary search tree and return its root
     my_bst = bst(height=5)
 
-    # Generate random max heap
+    # Generate random max heap and return its root
     my_heap = heap(height=1, max=True)
 
     # Pretty print the trees in stdout
@@ -113,10 +113,10 @@ Generate and pretty-print binary trees:
 
     my_list = [7, 3, 2, 6, 9, 4, 1, 5, 8]
 
-    # Convert the list into a tree structure
+    # Convert the list into a tree and return the latter's root
     my_tree = convert(my_list)
 
-    # Convert the list into a heap structure
+    # Convert the list into a heap and return the latter's root
     heapify(my_list)
     my_tree = convert(my_list)
 
@@ -170,13 +170,13 @@ and use your own custom node specification:
 
 .. code-block:: python
 
-    from binarytree import setup, tree, pprint
+    from binarytree import Node, setup, tree, pprint
 
-    # Define your own null/sentinel value (default: None)
+    # Define your own null/sentinel value
     null = -1
 
-    # Define own node class (default: binarytree.Node)
-    class MyNode(object):
+    # Define your own node class
+    class MyNode(Node):
 
         def __init__(self, data, left, right):
             self.data = data

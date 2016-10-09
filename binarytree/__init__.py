@@ -1,3 +1,4 @@
+import inspect as inspect_
 from heapq import heapify
 from random import sample, random
 
@@ -18,7 +19,18 @@ class Node(object):
         self.__setattr__(_right_attr, _null)
 
     def __repr__(self):
-        return 'Node({})'.format(self.__getattribute__(_value_attr))
+        return 'Node({})'.format(
+            self.__getattribute__(_value_attr)
+        )
+
+    def __str__(self):
+        return stringify(self)
+
+    def to_list(self):
+        return convert(self)
+
+    def properties(self):
+        return inspect(self)
 
 
 def _new_node(value):
@@ -251,21 +263,21 @@ def _generate_values(height, multiplier=1):
     return sample(range(count * multiplier), count)
 
 
-def setup(node_class=Node,
-          node_init_func=None,
-          null_value=None,
-          value_attr='value',
-          left_attr='left',
-          right_attr='right'):
+def setup(node_class,
+          node_init_func,
+          null_value,
+          value_attr,
+          left_attr,
+          right_attr):
     """Setup a custom specification for the binary tree node.
 
-    :param node_class: the binary tree node class (default: binarytree.Node)
+    :param node_class: the binary tree node class
     :param node_init_func: node initializer function which takes the node
         value as the only argument and returns a node instance
-    :param null_value: the null/sentinel value (default: None)
-    :param value_attr: the value attribute name (default: "value")
-    :param left_attr: the left child attribute name (default: "left")
-    :param right_attr: the right child attribute name (default: "right")
+    :param null_value: the null/sentinel value
+    :param value_attr: the value attribute name
+    :param left_attr: the left child attribute name
+    :param right_attr: the right child attribute name
     """
     global _node_cls
     global _node_init_func
@@ -274,6 +286,36 @@ def setup(node_class=Node,
     global _left_attr
     global _right_attr
 
+    # Do some sanity checking on the arguments
+    if not inspect_.isclass(node_class):
+        raise ValueError('Invalid class given for the node')
+    try:
+        node = node_init_func(2 if null_value == 1 else 1)
+    except:
+        raise ValueError(
+            'The node initializer function must be a callable which '
+            'takes the node value as its only argument'
+        )
+    if not isinstance(node, node_class):
+        raise ValueError(
+            'The node initializer function must be a callable which '
+            'returns an instance of {}'.format(node_class.__name__)
+        )
+    if not isinstance(node, Node):
+        raise ValueError('The node class must inherit from binarytree.Node')
+    for attribute in [value_attr, left_attr, right_attr]:
+        if not hasattr(node, attribute):
+            raise ValueError(
+                'The node class does not seem to have required '
+                'attribute {}'.format(attribute)
+            )
+    if (getattr(node, left_attr) != null_value or
+            getattr(node, right_attr) != null_value):
+        raise ValueError(
+            'The node class does not seem produce instances with expected '
+            'null/sentinel value "{}" for its child pointer attributes'
+            '"{}" and "{}"'.format(null_value, left_attr, right_attr)
+        )
     _node_cls = node_class
     _node_init_func = node_init_func
     _null = null_value
@@ -333,23 +375,23 @@ def heap(height=4, max=False):
         return _build_tree(values)
 
 
-def pprint(bt):
-    """Pretty print the binary tree.
+def stringify(bt):
+    """Return the string representation of the binary tree.
 
-    :param bt: the binary tree to pretty print
-    :raises ValueError: if an invalid tree is given
+    :param bt: the binary tree
+    :return: the string representation
     """
     if bt == _null:
-        return
+        return ''
     if _is_list(bt):
         if not bt:
-            return
+            return ''
         bt = _build_tree(bt)
     elif _is_node(bt):
         _validate_tree(bt)
     else:
         raise ValueError('Expecting a list or a node')
-    print('\n' + '\n'.join(_build_str(bt)[-1]))
+    return '\n' + '\n'.join(_build_str(bt)[-1])
 
 
 def convert(bt):

@@ -7,18 +7,18 @@ from random import randint
 
 import pytest
 
-from binarytree import *
+from binarytree import (
+    Node,
+    convert,
+    inspect,
+    tree,
+    bst,
+    heap,
+    stringify,
+    setup as setup_node,
+)
 
 repetitions = 100
-
-
-class DummyNode(Node):
-
-    def __init__(self, value):
-        super(DummyNode, self).__init__(value)
-        self.foo = value
-        self.bar = -1
-        self.baz = -1
 
 
 class CaptureOutput(list):
@@ -41,6 +41,7 @@ def attr(instance, attributes):
     return result
 
 
+@pytest.mark.order1
 def test_node():
     node = Node(1)
     assert attr(node, 'left') is None
@@ -49,6 +50,7 @@ def test_node():
     assert repr(node) == 'Node(1)'
 
 
+@pytest.mark.order2
 def test_tree():
     for invalid_height in ['foo', -1]:
         with pytest.raises(ValueError) as err:
@@ -220,33 +222,33 @@ def test_convert():
 
     assert convert([]) is None
 
-    test_tree = convert([1])
-    assert attr(test_tree, 'value') == 1
-    assert attr(test_tree, 'left') is None
-    assert attr(test_tree, 'right') is None
+    bt = convert([1])
+    assert attr(bt, 'value') == 1
+    assert attr(bt, 'left') is None
+    assert attr(bt, 'right') is None
 
-    test_tree = convert([1, 2])
-    assert attr(test_tree, 'value') == 1
-    assert attr(test_tree, 'left.value') == 2
-    assert attr(test_tree, 'right') is None
-    assert attr(test_tree, 'left.left') is None
-    assert attr(test_tree, 'left.right') is None
+    bt = convert([1, 2])
+    assert attr(bt, 'value') == 1
+    assert attr(bt, 'left.value') == 2
+    assert attr(bt, 'right') is None
+    assert attr(bt, 'left.left') is None
+    assert attr(bt, 'left.right') is None
 
-    test_tree = convert([1, None, 3])
-    assert attr(test_tree, 'value') == 1
-    assert attr(test_tree, 'left') is None
-    assert attr(test_tree, 'right.value') == 3
-    assert attr(test_tree, 'right.left') is None
-    assert attr(test_tree, 'right.right') is None
+    bt = convert([1, None, 3])
+    assert attr(bt, 'value') == 1
+    assert attr(bt, 'left') is None
+    assert attr(bt, 'right.value') == 3
+    assert attr(bt, 'right.left') is None
+    assert attr(bt, 'right.right') is None
 
-    test_tree = convert([1, 2, 3])
-    assert attr(test_tree, 'value') == 1
-    assert attr(test_tree, 'left.value') == 2
-    assert attr(test_tree, 'right.value') == 3
-    assert attr(test_tree, 'left.left') is None
-    assert attr(test_tree, 'left.right') is None
-    assert attr(test_tree, 'right.left') is None
-    assert attr(test_tree, 'right.right') is None
+    bt = convert([1, 2, 3])
+    assert attr(bt, 'value') == 1
+    assert attr(bt, 'left.value') == 2
+    assert attr(bt, 'right.value') == 3
+    assert attr(bt, 'left.left') is None
+    assert attr(bt, 'left.right') is None
+    assert attr(bt, 'right.left') is None
+    assert attr(bt, 'right.right') is None
 
 
 def test_inspect():
@@ -390,80 +392,77 @@ def test_inspect():
     assert str(err.value) == 'Found an invalid node in the tree'
 
 
-def test_display():
-    for invalid_argument in [1, 'foo', int]:
-        with pytest.raises(ValueError) as err:
-            pprint(invalid_argument)
-        assert str(err.value) == 'Expecting a list or a node'
+def test_print():
+    with CaptureOutput() as output:
+        print(convert([]))
+    assert output == ['None']
 
     with CaptureOutput() as output:
-        pprint([])
-    assert output == []
-
-    with CaptureOutput() as output:
-        pprint(None)
-    assert output == []
-
-    with CaptureOutput() as output:
-        pprint([1])
-    assert output == ['', '1', ' ']
-
-    with CaptureOutput() as output:
-        pprint([1, 2])
+        print(convert([1, 2]))
     assert output == ['', '  1', ' / ', '2  ', '   ']
 
     with CaptureOutput() as output:
-        pprint([1, None, 3])
+        print(convert([1, None, 3]))
     assert output == ['', '1  ', ' \\ ', '  3', '   ']
 
     with CaptureOutput() as output:
-        pprint([1, 2, 3])
+        print(convert([1, 2, 3]))
     assert output == ['', '  1  ', ' / \\ ', '2   3', '     ']
 
     with CaptureOutput() as output:
-        pprint([1, 2, 3, None, 5])
+        print(convert([1, 2, 3, None, 5]))
     assert output == [
         '', '  __1  ', ' /   \\ ', '2     3',
         ' \\     ', '  5    ', '       '
     ]
-
     with CaptureOutput() as output:
-        pprint([1, 2, 3, None, 5, 6])
+        print(convert([1, 2, 3, None, 5, 6]))
     assert output == [
         '', '  __1__  ', ' /     \\ ',
         '2       3', ' \\     / ',
         '  5   6  ', '         '
     ]
-
     with CaptureOutput() as output:
-        pprint([1, 2, 3, None, 5, 6, 7])
+        print(convert([1, 2, 3, None, 5, 6, 7]))
     assert output == [
         '', '  __1__    ', ' /     \\   ',
         '2       3  ', ' \\     / \\ ',
         '  5   6   7', '           '
     ]
-
     with CaptureOutput() as output:
-        pprint([1, 2, 3, 8, 5, 6, 7])
+        print(convert([1, 2, 3, 8, 5, 6, 7]))
     assert output == [
         '', '    __1__    ', '   /     \\   ',
         '  2       3  ', ' / \\     / \\ ',
         '8   5   6   7', '             '
     ]
-
     for _ in range(repetitions):
-        test_tree = tree(height=10)
+        bt = tree(height=10)
         with CaptureOutput() as output1:
-            pprint(test_tree)
-        with CaptureOutput() as output2:
-            pprint(convert(test_tree))
-        assert output1 == output2
+            print(bt)
+        assert output1 == stringify(bt).splitlines()
 
 
 def test_setup():
     null = -1
-    setup(
-        node_class=DummyNode,
+
+    class GoodNode(Node):
+
+        def __init__(self, val, bar=-1, baz=-1):
+            self.foo = val
+            self.bar = bar
+            self.baz = baz
+
+    class BadNode(object):
+
+        def __init__(self, val, bar=-1, baz=-1):
+            self.foo = val
+            self.bar = bar
+            self.baz = baz
+
+    setup_node(
+        node_init_func=lambda v: GoodNode(v),
+        node_class=GoodNode,
         null_value=null,
         value_attr='foo',
         left_attr='bar',
@@ -475,7 +474,7 @@ def test_setup():
             node = nodes_to_visit.pop()
 
             # Check that the new node class is used
-            assert isinstance(node, DummyNode)
+            assert isinstance(node, GoodNode)
 
             # Check that the original attributes do not exist
             assert not hasattr(node, 'left')
@@ -489,14 +488,15 @@ def test_setup():
             assert isinstance(value, int)
 
             if left != null:
-                assert isinstance(left, DummyNode)
+                assert isinstance(left, GoodNode)
                 nodes_to_visit.append(left)
             if right != null:
-                assert isinstance(right, DummyNode)
+                assert isinstance(right, GoodNode)
                 nodes_to_visit.append(right)
 
-    setup(
-        node_init_func=lambda v: DummyNode(v),
+    setup_node(
+        node_init_func=lambda v: GoodNode(v),
+        node_class=GoodNode,
         null_value=null,
         value_attr='foo',
         left_attr='bar',
@@ -508,7 +508,7 @@ def test_setup():
             node = nodes_to_visit.pop()
 
             # Check that the new node class is used
-            assert isinstance(node, DummyNode)
+            assert isinstance(node, GoodNode)
 
             # Check that the original attributes do not exist
             assert not hasattr(node, 'left')
@@ -522,8 +522,85 @@ def test_setup():
             assert isinstance(value, int)
 
             if left != null:
-                assert isinstance(left, DummyNode)
+                assert isinstance(left, GoodNode)
                 nodes_to_visit.append(left)
             if right != null:
-                assert isinstance(right, DummyNode)
+                assert isinstance(right, GoodNode)
                 nodes_to_visit.append(right)
+
+    with pytest.raises(ValueError) as err:
+        setup_node(
+            node_init_func=lambda v: BadNode(v),
+            node_class=None,
+            null_value=-1,
+            value_attr='foo',
+            left_attr='bar',
+            right_attr='baz',
+        )
+    assert 'Invalid class given' in str(err.value)
+
+    with pytest.raises(ValueError) as err:
+        setup_node(
+            node_init_func=None,
+            node_class=BadNode,
+            null_value=-1,
+            value_attr='foo',
+            left_attr='bar',
+            right_attr='baz',
+        )
+    assert 'function must be a callable' in str(err.value)
+
+    with pytest.raises(ValueError) as err:
+        setup_node(
+            node_init_func=lambda v: GoodNode(v),
+            node_class=BadNode,
+            null_value=-1,
+            value_attr='foo',
+            left_attr='bar',
+            right_attr='baz',
+        )
+    assert 'returns an instance of BadNode' in str(err.value)
+
+    with pytest.raises(ValueError) as err:
+        setup_node(
+            node_init_func=lambda v: BadNode(v),
+            node_class=BadNode,
+            null_value=-1,
+            value_attr='foo',
+            left_attr='bar',
+            right_attr='baz',
+        )
+    assert 'must inherit from binarytree.Node' in str(err.value)
+
+    with pytest.raises(ValueError) as err:
+        setup_node(
+            node_init_func=lambda v: GoodNode(v),
+            node_class=GoodNode,
+            null_value=-1,
+            value_attr='foo',
+            left_attr='bar',
+            right_attr='baz',
+        )
+    assert 'must inherit from binarytree.Node' in str(err.value)
+
+    with pytest.raises(ValueError) as err:
+        setup_node(
+            node_init_func=lambda v: GoodNode(v),
+            node_class=GoodNode,
+            null_value=-1,
+            value_attr='foo',
+            left_attr='bar',
+            right_attr='baz',
+        )
+    assert 'must inherit from binarytree.Node' in str(err.value)
+
+    # with pytest.raises(ValueError) as err:
+    #     setup_node(
+    #         node_init_func=lambda v: BadNode(v, -1, -1),
+    #         node_class=BadNode,
+    #         null_value=-1,
+    #         value_attr='foo',
+    #         left_attr='bar',
+    #         right_attr='baz',
+    #     )
+    # assert str(err.value) == 'Found an invalid node in the tree'
